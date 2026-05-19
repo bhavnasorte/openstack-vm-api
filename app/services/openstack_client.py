@@ -3,6 +3,7 @@ from app.models.vm import VM
 
 _vm_store = {}
 
+
 class OpenStackClient:
 
     def create_vm(self, name, flavor, image, network=None):

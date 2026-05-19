@@ -7,6 +7,7 @@ client = OpenStackClient()
 
 REQUIRED_FIELDS = ["name", "flavor", "image"]
 
+
 @vm_bp.route("/vms", methods=["POST"])
 def create_vm():
     body = request.get_json()
@@ -23,10 +24,12 @@ def create_vm():
     )
     return success(vm.to_dict(), 201)
 
+
 @vm_bp.route("/vms", methods=["GET"])
 def list_vms():
     vms = client.list_vms()
     return success([vm.to_dict() for vm in vms])
+
 
 @vm_bp.route("/vms/<vm_id>", methods=["GET"])
 def get_vm(vm_id):
@@ -34,6 +37,7 @@ def get_vm(vm_id):
     if not vm or vm.status == "DELETED":
         return error("VM not found", 404)
     return success(vm.to_dict())
+
 
 @vm_bp.route("/vms/<vm_id>/start", methods=["POST"])
 def start_vm(vm_id):
@@ -43,6 +47,7 @@ def start_vm(vm_id):
         return error(err, code)
     return success(vm.to_dict())
 
+
 @vm_bp.route("/vms/<vm_id>/stop", methods=["POST"])
 def stop_vm(vm_id):
     vm, err = client.stop_vm(vm_id)
@@ -50,6 +55,7 @@ def stop_vm(vm_id):
         code = 404 if "not found" in err else 409
         return error(err, code)
     return success(vm.to_dict())
+
 
 @vm_bp.route("/vms/<vm_id>", methods=["DELETE"])
 def delete_vm(vm_id):

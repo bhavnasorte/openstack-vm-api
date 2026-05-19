@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime
 
+
 class VM:
     def __init__(self, name, flavor, image, network=None):
         self.id = str(uuid.uuid4())

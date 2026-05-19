@@ -6,9 +6,9 @@ from app.routes.vm_routes import vm_bp
 load_dotenv()
 
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(name)s: %(message)s"
+    level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s"
 )
+
 
 def create_app():
     app = Flask(__name__)
