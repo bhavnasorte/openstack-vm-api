@@ -1,93 +1,96 @@
-# OpenStack VM Lifecycle API
+# openstack-vm-api
 
-A REST API prototype for managing OpenStack VM lifecycle operations — create, list, start, stop, and delete virtual machines.
+A REST API to manage OpenStack VM lifecycle built as part of an engineering assessment.
 
-## Tech Stack
-- Python 3.11, Flask 3.1
-- Mocked OpenStack SDK (swappable with real SDK)
-- pytest + pytest-flask for testing
-- GitHub Actions for CI
-- flake8 + black for code quality
+## What this does
 
-## Setup
+You can use this API to create, list, start, stop, and delete virtual machines.
+The OpenStack SDK is mocked with in-memory state for now, but the service layer
+is designed so you can swap in the real SDK without touching the routes.
 
-```bash
-git clone https://github.com/YOUR_USERNAME/openstack-vm-api.git
-cd openstack-vm-api
-python3 -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-python run.py
-```
+## Why Flask?
 
-Server runs at `http://localhost:5000`
+I picked Flask because it stays out of your way. No magic, no hidden behavior,
+just routes, request, response. Easy to test, easy to read.
+
+## Project Structure
+
+    app/
+    routes/      - URL endpoints, request parsing
+    services/    - OpenStack SDK calls (mocked for now)
+    models/      - VM data model
+    utils/       - shared response helpers
+
+## How to run it
+
+    git clone https://github.com/bhavnasorte/openstack-vm-api.git
+    cd openstack-vm-api
+    python3 -m venv venv && source venv/bin/activate
+    pip install -r requirements.txt
+    cp .env.example .env
+    python run.py
+
+Server starts at http://localhost:5000
 
 ## Endpoints
 
-| Method | Endpoint | Description | Status Code |
-|--------|----------|-------------|-------------|
-| GET | /health | Health check | 200 |
-| POST | /api/v1/vms | Create a VM | 201 |
-| GET | /api/v1/vms | List all VMs | 200 |
-| GET | /api/v1/vms/{id} | Get VM details | 200 |
-| POST | /api/v1/vms/{id}/start | Start a VM | 200 |
-| POST | /api/v1/vms/{id}/stop | Stop a VM | 200 |
-| DELETE | /api/v1/vms/{id} | Delete a VM | 200 |
+| Method | Endpoint | What it does |
+|--------|----------|--------------|
+| GET | /health | Check if server is up |
+| POST | /api/v1/vms | Create a new VM |
+| GET | /api/v1/vms | List all VMs |
+| GET | /api/v1/vms/{id} | Get one VM by ID |
+| POST | /api/v1/vms/{id}/start | Start a stopped VM |
+| POST | /api/v1/vms/{id}/stop | Stop a running VM |
+| DELETE | /api/v1/vms/{id} | Delete a VM |
 
-## Example Usage
+## Quick test
 
-```bash
-# Health check
-curl http://localhost:5000/health
+    # create
+    curl -X POST http://localhost:5000/api/v1/vms \
+      -H "Content-Type: application/json" \
+      -d '{"name":"my-vm","flavor":"m1.small","image":"ubuntu-22.04"}'
 
-# Create a VM
-curl -X POST http://localhost:5000/api/v1/vms \
-  -H "Content-Type: application/json" \
-  -d '{"name":"my-vm","flavor":"m1.small","image":"ubuntu-22.04"}'
+    # list
+    curl http://localhost:5000/api/v1/vms
 
-# List all VMs
-curl http://localhost:5000/api/v1/vms
+    # stop
+    curl -X POST http://localhost:5000/api/v1/vms/{id}/stop
 
-# Get a VM
-curl http://localhost:5000/api/v1/vms/{id}
+    # delete
+    curl -X DELETE http://localhost:5000/api/v1/vms/{id}
 
-# Stop a VM
-curl -X POST http://localhost:5000/api/v1/vms/{id}/stop
+## Response format
 
-# Start a VM
-curl -X POST http://localhost:5000/api/v1/vms/{id}/start
+Every response looks the same whether success or error:
 
-# Delete a VM
-curl -X DELETE http://localhost:5000/api/v1/vms/{id}
-```
+    { "data": { ... }, "error": null }
 
-## Response Format
+## Running tests
 
-All responses follow a consistent envelope:
+    pytest tests/ -v
 
-```json
-{
-  "data": { ... },
-  "error": null
-}
-```
+7 tests covering create, list, get, stop, start, delete and conflict cases.
 
-## Running Tests
+## VM states
 
-```bash
-pytest tests/ -v
-```
+    PENDING -> ACTIVE -> STOPPED -> DELETED
+
+- You cannot start an already running VM, returns 409
+- You cannot stop an already stopped VM, returns 409
+- Deleted VMs return 404
+
+## What I would build next
+
+- Real OpenStack SDK, the swap would only touch services/openstack_client.py
+- JWT auth and role based access
+- Async jobs, create and delete are slow in real OpenStack, should return a job ID to poll
+- Pagination on the list endpoint
+- Persistent storage, replace in-memory dict with PostgreSQL
+- Docker and docker-compose for easy local setup
+- Rate limiting
+- Prometheus metrics
 
 ## Architecture
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for full design decisions, VM state machine, and tech stack rationale.
-
-## Roadmap / Backlog
-- [ ] JWT authentication and role-based access control
-- [ ] Real OpenStack SDK integration
-- [ ] Async job tracking with polling endpoint
-- [ ] Pagination and filtering on VM list
-- [ ] Rate limiting
-- [ ] Prometheus metrics
-- [ ] Docker + docker-compose
-- [ ] Persistent storage (PostgreSQL)
+See docs/ARCHITECTURE.md for the full design writeup.
