@@ -94,3 +94,7 @@ Every response looks the same whether success or error:
 ## Architecture
 
 See docs/ARCHITECTURE.md for the full design writeup.
+
+
+---
+Built by Bhavna Sorte
